@@ -15,6 +15,7 @@ import consolidate from 'consolidate';
 import { mergeMap } from 'rxjs/operators';
 import { Inject, Injectable } from '@nestjs/common';
 import pdf, { CreateResult, FileInfo } from 'html-pdf';
+import nunjucks from 'nunjucks';
 
 import {
     PDFOptions,
@@ -115,14 +116,19 @@ export class PDFService implements PDFInterface {
         template: string,
         { root, extension, engine }: ViewOptions,
     ): string {
-        return join(root, template, `html.${extension || engine}`);
+        return join(root, `${template}.${extension || engine}`);
     }
 
     private generateHtmlFromTemplate(
         template: string,
-        { engine, engineOptions }: ViewOptions,
+        { engine, engineOptions, root }: ViewOptions,
         locals?: Record<string, any>,
     ): Observable<string> {
+        if (engine === 'nunjucks') {
+            nunjucks.configure(join(root), {
+                autoescape: true,
+            });
+        }
         return bindNodeCallback<
             [string, ViewOptions['engineOptions'] | undefined],
             [string]
